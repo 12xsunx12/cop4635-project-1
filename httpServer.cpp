@@ -1,16 +1,16 @@
 #include "httpServer.hpp"
 
-Server::Server() {
+httpServer::httpServer() {
     startServer();
 }
 
-int Server::startServer() {
-    srvrFields = (AF_INET, SOCK_STREAM, 0); //af_inet for ipv4 //sock stream for tcp/ip protocols
+int httpServer::startServer() {
+    int srvr = socket(AF_INET, SOCK_STREAM, 0); //af_inet for ipv4 //sock stream for tcp/ip protocols
 
     // -1 if socket fails
-    if (srvrFields < 0) {
+    if (srvr < 0) {
         std::cerr << "Error: problem initializing server\n";
-        close(srvrFields); //close is from unistd.h
+        close(srvr); //close is from unistd.h
         return -1;
     }
 
@@ -21,16 +21,16 @@ int Server::startServer() {
 
     int addrLen = sizeof(address);
 
-    if (bind(srvrFields, (sockaddr*)&address, addrLen) < 0) {
-        std::cerr("Error: did not bind to PORT or IP properly\n");
-        close(srvrFields);
+    if (bind(srvr, (sockaddr*)&address, addrLen) < 0) {
+        std::cerr << "Error: did not bind to PORT or IP properly\n";
+        close(srvr);
         return -1;
     }
 
     // server is now bound, listening for a connection
-    if (listen(srvrFields, MAX_CONNECTIONS) < 0) {
-        std::cerr("Error: failure to listen for connections\n");
-        close(srvrFields);
+    if (listen(srvr, MAX_CONNECTIONS) < 0) {
+        std::cerr << "Error: failure to listen for connections\n";
+        close(srvr);
         return -1;
     }
 
@@ -38,8 +38,14 @@ int Server::startServer() {
     while(true) {
 
         // type casting sockaddr_in* to sockaddr*
-        int newSocket = accept(srvrFields, (sockaddr*)&address, (socklen_t*)&addrLen);
+        int newSocket = accept(srvr, (sockaddr*)&address, (socklen_t*)&addrLen);
 
         // now that a socket has been established to an endpoint, data can be sent and recieved
+        std::string request;
+        char buffer[BUFFER_SIZE] = {0};
+        int readDataLen = read(newSocket, buffer, BUFFER_SIZE); 
+
+        // print the request
+        std::cout << buffer << std::endl;
     }
 }

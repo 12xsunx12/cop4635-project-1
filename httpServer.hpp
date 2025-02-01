@@ -10,9 +10,9 @@
 #define MAX_CONNECTIONS 10
 #define BUFFER_SIZE 1024
 
-class Server { 
+class httpServer { 
     public:
-        Server();
+        httpServer();
         int startServer();
 
     private:

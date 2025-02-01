@@ -9,7 +9,6 @@ TARGET = project1-odonnell-alston
 # define make tools
 run:
 	$(CXX) $(FLAGS) $(SRC) -o $(TARGET)
-	clear
 	@./$(TARGET)
 	@$(MAKE) --no-print-directory clean
 
