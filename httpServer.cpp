@@ -14,6 +14,10 @@ int httpServer::startServer() {
         return -1;
     }
 
+    // set socket option; helps with removing the time gap between re-using ports after you close the program and re-launch it
+    int opt = 1;
+    setsockopt(srvr, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
     // binding to an ip and a port
     address.sin_family = AF_INET; // for ipv4
     address.sin_addr.s_addr = INADDR_ANY; // make server listen to all interfaces on our system
