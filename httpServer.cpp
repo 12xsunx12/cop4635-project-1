@@ -47,5 +47,15 @@ int httpServer::startServer() {
 
         // print the request
         std::cout << buffer << std::endl;
+
+        // send a basic response as testing, to see if we recieve anything from the browser view
+        std::string response = 
+        "HTTP/1.1 200 OK\r\n" // header
+        "Content-Type:text/plane\r\n"
+        "Connection:close\r\n\r\n"
+        "Hello from server!";
+
+        send(newSocket, response.c_str(), response.length(), 0);
+        close(newSocket);
     }
 }
