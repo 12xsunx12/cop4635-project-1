@@ -40,34 +40,55 @@ int httpServer::startServer() {
 
     // server is now listening, repeatedly grab new connections in a while loop
     while(true) {
-
-        // type casting sockaddr_in* to sockaddr*
         int newSocket = accept(srvr, (sockaddr*)&address, (socklen_t*)&addrLen);
+        if (newSocket < 0) {
+            std::cerr << "Error: failed to accept connection\n";
+            continue;
+        }
 
-        // now that a socket has been established to an endpoint, data can be sent and recieved
-        std::string request;
         char buffer[BUFFER_SIZE] = {0};
-        int readDataLen = read(newSocket, buffer, BUFFER_SIZE); 
+        int readDataLen = read(newSocket, buffer, BUFFER_SIZE);
+        if (readDataLen < 0) {
+            std::cerr << "Error: failed to read request\n";
+            close(newSocket);
+            continue;
+        }
 
-        // Read index.html file
-        std::ifstream file("FilesForServerFolder-1/index.html");
+        std::cout << "Request: " << buffer << std::endl;
+
+        // Extract requested file name from request
+        std::string request(buffer);
+        std::string fileName = "FilesForServerFolder-1/index.html";  // Default file
+
+        size_t startPos = request.find("GET /");
+        if (startPos != std::string::npos) {
+            size_t endPos = request.find(" ", startPos + 5);
+            std::string requestedFile = request.substr(startPos + 5, endPos - (startPos + 5));
+
+            if (requestedFile.empty() || requestedFile == "/") {
+                fileName = "FilesForServerFolder-1/index.html";
+            } else {
+                fileName = "FilesForServerFolder-1/" + requestedFile;
+            }
+        }
+
+        // Read the requested file
+        std::ifstream file(fileName);
         std::stringstream fileStream;
         if (file) {
             fileStream << file.rdbuf();
             file.close();
         } else {
-            fileStream << "<h1>Error: Could not open index.html</h1>";
+            fileStream << "<h1>404 Not Found</h1>";
         }
         std::string fileContent = fileStream.str();
-        // print the request
-        std::cout << buffer << std::endl;
 
-        // send a basic response as testing, to see if we recieve anything from the browser view
-        std::string response = 
-        "HTTP/1.1 200 OK\r\n" // header
+        // Send response
+        std::string response =
+        "HTTP/1.1 200 OK\r\n"
         "Content-Type: text/html\r\n"
-        "Connection:close\r\n\r\n"
-        "Hello from server!<br>" + fileContent;
+        "Connection: close\r\n\r\n" +
+        fileContent;
 
         send(newSocket, response.c_str(), response.length(), 0);
         close(newSocket);
