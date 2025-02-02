@@ -49,15 +49,25 @@ int httpServer::startServer() {
         char buffer[BUFFER_SIZE] = {0};
         int readDataLen = read(newSocket, buffer, BUFFER_SIZE); 
 
+        // Read index.html file
+        std::ifstream file("FilesForServerFolder-1/index.html");
+        std::stringstream fileStream;
+        if (file) {
+            fileStream << file.rdbuf();
+            file.close();
+        } else {
+            fileStream << "<h1>Error: Could not open index.html</h1>";
+        }
+        std::string fileContent = fileStream.str();
         // print the request
         std::cout << buffer << std::endl;
 
         // send a basic response as testing, to see if we recieve anything from the browser view
         std::string response = 
         "HTTP/1.1 200 OK\r\n" // header
-        "Content-Type:text/plane\r\n"
+        "Content-Type: text/html\r\n"
         "Connection:close\r\n\r\n"
-        "Hello from server!";
+        "Hello from server!<br>" + fileContent;
 
         send(newSocket, response.c_str(), response.length(), 0);
         close(newSocket);

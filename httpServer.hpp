@@ -5,6 +5,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <netinet/in.h>
+#include <fstream>
+#include <sstream>
 
 #define PORT 60001
 #define MAX_CONNECTIONS 10
