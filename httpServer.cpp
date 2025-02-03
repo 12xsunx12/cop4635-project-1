@@ -25,13 +25,14 @@ int httpServer::startServer() {
 
     int addrLen = sizeof(address);
 
+    // socket failed to bind to ip or port
     if (bind(srvr, (sockaddr*)&address, addrLen) < 0) {
         std::cerr << "Error: did not bind to PORT or IP properly\n";
         close(srvr);
         return -1;
     }
 
-    // server is now bound, listening for a connection
+    // server is now bound, listening for a connection, fails if listening function didn't work
     if (listen(srvr, MAX_CONNECTIONS) < 0) {
         std::cerr << "Error: failure to listen for connections\n";
         close(srvr);
@@ -87,8 +88,7 @@ int httpServer::startServer() {
         std::string response =
         "HTTP/1.1 200 OK\r\n"
         "Content-Type: text/html\r\n"
-        "Connection: close\r\n\r\n" +
-        fileContent;
+        "Connection: close\r\n\r\n" + fileContent;
 
         send(newSocket, response.c_str(), response.length(), 0);
         close(newSocket);
