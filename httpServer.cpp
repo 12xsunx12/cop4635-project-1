@@ -25,13 +25,14 @@ int httpServer::startServer() {
 
     int addrLen = sizeof(address);
 
+    // socket failed to bind to ip or port
     if (bind(srvr, (sockaddr*)&address, addrLen) < 0) {
         std::cerr << "Error: did not bind to PORT or IP properly\n";
         close(srvr);
         return -1;
     }
 
-    // server is now bound, listening for a connection
+    // server is now bound, listening for a connection, fails if listening function didn't work
     if (listen(srvr, MAX_CONNECTIONS) < 0) {
         std::cerr << "Error: failure to listen for connections\n";
         close(srvr);
@@ -40,24 +41,54 @@ int httpServer::startServer() {
 
     // server is now listening, repeatedly grab new connections in a while loop
     while(true) {
-
-        // type casting sockaddr_in* to sockaddr*
         int newSocket = accept(srvr, (sockaddr*)&address, (socklen_t*)&addrLen);
+        if (newSocket < 0) {
+            std::cerr << "Error: failed to accept connection\n";
+            continue;
+        }
 
-        // now that a socket has been established to an endpoint, data can be sent and recieved
-        std::string request;
         char buffer[BUFFER_SIZE] = {0};
-        int readDataLen = read(newSocket, buffer, BUFFER_SIZE); 
+        int readDataLen = read(newSocket, buffer, BUFFER_SIZE);
+        if (readDataLen < 0) {
+            std::cerr << "Error: failed to read request\n";
+            close(newSocket);
+            continue;
+        }
 
-        // print the request
-        std::cout << buffer << std::endl;
+        std::cout << "Request: " << buffer << std::endl;
 
-        // send a basic response as testing, to see if we recieve anything from the browser view
-        std::string response = 
-        "HTTP/1.1 200 OK\r\n" // header
-        "Content-Type:text/plane\r\n"
-        "Connection:close\r\n\r\n"
-        "Hello from server!";
+        // Extract requested file name from request
+        std::string request(buffer);
+        std::string fileName = "FilesForServerFolder-1/index.html";  // Default file
+
+        size_t startPos = request.find("GET /");
+        if (startPos != std::string::npos) {
+            size_t endPos = request.find(" ", startPos + 5);
+            std::string requestedFile = request.substr(startPos + 5, endPos - (startPos + 5));
+
+            if (requestedFile.empty() || requestedFile == "/") {
+                fileName = "FilesForServerFolder-1/index.html";
+            } else {
+                fileName = "FilesForServerFolder-1/" + requestedFile;
+            }
+        }
+
+        // Read the requested file
+        std::ifstream file(fileName);
+        std::stringstream fileStream;
+        if (file) {
+            fileStream << file.rdbuf();
+            file.close();
+        } else {
+            fileStream << "<h1>404 Not Found</h1>";
+        }
+        std::string fileContent = fileStream.str();
+
+        // Send response
+        std::string response =
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: text/html\r\n"
+        "Connection: close\r\n\r\n" + fileContent;
 
         send(newSocket, response.c_str(), response.length(), 0);
         close(newSocket);
